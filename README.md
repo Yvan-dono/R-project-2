@@ -3,6 +3,5 @@ Files for my BMI_project :
 
 BMI_project.Rmd: file used to perform my statistical analyses on groups of diabetic and non-diabetic patients.
 
-BMI_report.pdf: .
+BMI_report.pdf: my report
 
-Attrition_report.pdf: joint report of the two parts
