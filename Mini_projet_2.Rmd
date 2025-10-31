@@ -1,0 +1,133 @@
+---
+title: "Calcul d’IMC de patients diabéques et non-diabéques"
+output: html_document
+date: "2025-10-16"
+---
+Voici notre base de données de patients diabétiques et non-diabétiques
+
+```{r, echo=FALSE}
+data_imc <- read.csv("imc.csv", header=TRUE, sep=";")
+data_imc
+```
+
+Questions : 
+
+1) Créer une fonction permettant de calculer l’imc
+```{r}
+Calcul_IMC <- function(poids, taille) {
+  IMC <- poids/(taille*taille)
+  return(IMC)
+}
+```
+
+2) Calculer l’imc de chaque patient
+```{r}
+data_imc$IMC <- Calcul_IMC(data_imc$poids, data_imc$taille)
+data_imc$IMC
+```
+
+
+3) Quel est le coefficient de corrélation entre le poids et la taille ? 
+```{r}
+cor.test(data_imc$poids, data_imc$taille)
+```
+
+Cette corrélation est-elle significative ?
+
+Interprétation du test : 
+
+H0 : Le poids et la taille sont indépendants (hypothèse nulle) 
+
+H1 : Le poids et la taille sont corrélés (hypothèse alternative) 
+
+On rejette H0 (p-value<0.05) et H1 est validé. Donc, il existe une relation entre poids et taille.
+
+A partir du résultat du test statistique, on peut en conclure que la corrélation entre le poids et la taille est statistiquement significative.
+
+4) Représenter sur le même graphique la relation entre le poids et la taille pour chaque groupe de patients (diabétiques, non-diabétiques)
+
+```{r, echo=FALSE}
+# Séparation des groupes de patients
+diabetiques <- data_imc[data_imc$diabete == "oui", ]
+non_diabetiques <- data_imc[data_imc$diabete == "non", ]
+
+# Création d'un graphique pour les non diabetiques
+plot(non_diabetiques$taille, non_diabetiques$poids, 
+     col = "blue", 
+     pch = 16,  
+     xlab = "Taille en mètres", 
+     ylab = "Poids en kg", 
+     main = "Relation entre poids et taille (Diabétiques et Non-diabétiques)",
+     xlim = range(data_imc$taille), 
+     ylim = range(data_imc$poids))
+
+# Ajouter les points pour les diabétiques
+points(diabetiques$taille, diabetiques$poids, 
+       col = "red", 
+       pch = 18)  
+
+# Ajout d'une légende
+legend("topleft", 
+       legend = c("Non-diabétiques", "Diabétiques"), 
+       col = c("blue", "red"), 
+       pch = c(16, 18))
+```
+
+5) Représenter côte à côte les distributions (histogrammes) de l’imc pour chaque groupe de patients. 
+
+```{r}
+# Création de deux graphiques côte à côte
+par(mfrow = c(1, 2))  
+# Histogramme des diabétiques
+hist(diabetiques$IMC, 
+     col = "red", 
+     main = "IMC des diabétiques", 
+     xlab = "IMC")
+# Histogramme des non-diabétiques
+hist(non_diabetiques$IMC, 
+     col = "blue", 
+     main = "IMC des non-diabétiques", 
+     xlab = "IMC")
+```
+
+6) La différence d’imc entre les groupes est-elle significative ?
+
+Pour savoir si cette différence est statistiquement significative, on va effectuer un test stastistique. Cependant, plusieurs critères sont à valider avant de pourvoir réaliser le test. Tout d'abord, nos deux groupes doivent contenir un assez grand nombre de sujets à comparer (>30) et leurs distributions doivent suivre une loi normale. On sait que les 2 groupes contiennent chacun 100 patients. Un des critères est donc déja valide. Pour vérifier si nos deux groupes suivent une loi normale, on peut le vérifier avec un diagramme de normalité.
+
+```{r}
+# Affichage de mes graphiques côte à côte
+par(mfrow= c(1,2))
+# Diagramme des diabétiques
+qqnorm(diabetiques$IMC, col = "red");qqline(diabetiques$IMC)
+# Diagramme des non-diabétiques
+qqnorm(non_diabetiques$IMC, col = "blue");qqline(non_diabetiques$IMC)
+```
+
+On constate sur les diagrammes des 2 groupes que les points sont majoritairement proches de la ligne droite. Cela signifit que les données suivent une distribution normale. Le second critère est également validé. Il ne reste qu'un dernier critère à valider pour effectuer notre test. Il faut que les variances soient identiques dans les deux groupes. Pour cela, on va faire un test d'égalité des variances.
+
+```{r}
+var.test(diabetiques$IMC, non_diabetiques$IMC)
+```
+
+Interprétation du test : 
+
+H0 : les variances sont égales (hypothèse nulle) 
+
+H1 : les variances ne sont pas égales (hypothèse alternative) 
+
+On rejette H0 (p-value<0.05) et H1 est validé. Donc, les variances des deux distributions ne sont pas égales.
+
+Malgré que les variances des deux distributions ne soient pas égales, il est possible d'effectuer notre test statistique. Dans cette situation, on utlise un test de Welch pour comparer les moyennes.
+```{r}
+t.test(diabetiques$IMC, non_diabetiques$IMC, var.equal=FALSE)
+```
+
+Interprétation du test : 
+
+H0 : les moyennes sont égales (hypothèse nulle) 
+
+H1 : les moyennes ne sont pas égales (hypothèse alternative) 
+
+On rejette H0 (p-value<0.05) et H1 est validé. Donc, les moyennes des deux distributions ne sont pas égales.
+
+A partir du résultat du test statistique, on peut en conclure que la différence d'imc entre les deux groupes est significative.
